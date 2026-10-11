@@ -162,7 +162,7 @@ def main():
         print(f"Keresés: {args.location}, '{args.keyword}', ár: {args.min_price}-{args.max_price} Ft")
 
         for page_num in range(1, args.max_pages + 1):
-            url = f"https://www.jofogas.hu/{args.location}?q={quote_plus(args.keyword)}&o={page_num}"
+            url = f"https://www.jofogas.hu/{args.location}?q={quote_plus(args.keyword)}&o={page_num}&min_price={args.min_price}&max_price={args.max_price}"
             print(f"-> {page_num}. találati oldal: {url}")
 
             safe_goto(page_obj, url)
@@ -245,3 +245,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
