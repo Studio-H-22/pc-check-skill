@@ -16,6 +16,8 @@ A skill forrása: https://github.com/Studio-H-22/pc-check-skill. A „pc check�
 A skill más felhasználó által is használható. A lentiek alapértékek, nem mindenki kötelező vásárlási feltételei. A felhasználó aktuális keresőkifejezése, helyszíne, ársávja, RAM-/tárhelyigénye és vásárlási kerete felülírja őket; ne változtasd meg a programot csak egy keresés kedvéért. A pontozás audio-központú: eltérő felhasználási cél esetén közöld ezt, és csak kifejezett kérésre alakítsd át a pontsúlyokat. Alaphelyszín Budapest és Pest vármegye mindkét forrásnál; más hely vagy országos gyűjtés megadható. A helyi telepítés nem szinkronizálódik automatikusan más gépre vagy minden ChatGPT-beszélgetésbe.
 ## Rövid és ingyenes alapfolyamat
 
+**Kötelező adatfeldolgozás és válaszellenőrzés:** a [Mezők, egységes pontozás és válaszforma](#mezők-egységes-pontozás-és-válaszforma) rész az alapfolyamat része minden futtatónál (Codex, OpenClaw vagy más Python-képes asszisztens). Ezt ne hagyd ki más környezetben sem. A nyers JSON-t olvasd, ne csak egy átalakított táblázatot vagy a gyűjtő naplóját.
+
 A felhasználó kifejezett preferenciája: gyors végrehajtás (nem a válasz rövidítése), kizárólag külön szolgáltatási díj és kreditfogyasztás nélküli gyűjtés. Az Apify ajándék/próbakredit is kreditfogyasztás, ezért nem használható alapértelmezésként. Korábbi egyszeri Apify-jóváhagyás nem engedély egy új futásra. Fizetős scraper, proxy, API vagy LLM ne induljon; költségjóváhagyást se kérj rutinszerűen. Apify csak új, kifejezett felhasználói kérés esetén kerülhet vissza; eljárása: [references/apify-marketplace.md](references/apify-marketplace.md).
 
 Használd a meglévő Jófogás Pythont, a már működő Python-környezetből; ne kezdd újra a telepítést minden keresésnél. Azonos kérés értékelésének rövidítésekor ne gyűjts újra. Facebookhoz elsőként a rendelkezésre álló beépített böngésző/webkereső nyilvános adatait használd, külön scraperdíj nélkül. Egy hozzáférési próba után konkrét akadály esetén fejezd be az elérhető forrás elemzését; ne kezdj hosszú kerülőutas hibakeresésbe. Ingyenes alternatíva és korlátai: [references/free-collection.md](references/free-collection.md). Ne állítsd, hogy a webkereső teljes Marketplace-adatbázist ad.
@@ -124,3 +126,65 @@ A következő részletes tartalom a teljes eredmény kötelező tartalma; nagy l
 4. Részpontok legalább a shortlisthez; kizárások, bizonytalanságok és 64 GB-ra bővítési út. A státuszokat különítsd el: megfelel / bővítendő / tisztázandó / kizárt, és közöld a kizárás okát.
 
 Az új szabály alapján például 500 GB SSD + 2 TB HDD és 2×500 GB SSD tárhely szempontból megfelel; egyetlen 500 vagy 512 GB SSD az 1 TB összkapacitás hiánya miatt bővítendő. Régi értékelés javításakor az 500 GB önmagában ne maradjon kizárási indok.
+
+## Mezők, egységes pontozás és válaszforma
+
+### Facebook: a nyers adat a mérvadó
+
+A helyi Facebook-gyűjtő kimenete egy objektum, a hirdetések a `records` tömbben vannak. A nyers kimenetet az esetleges saját `listings.json` átalakítás mellett is tartsd meg. Átalakításnál őrizd meg az ár, pénznem, hely, leírás, ID és URL bizonyítékát; ha egy új táblázatból hiányoznak, az átalakítás hibája nem a Facebook adathiánya. A `schema_version: 2` export egyértelmű felső szintű mezőket is ad **minden rekordon belül**:
+
+| Adat | Elsődleges mező | Régebbi kimenet / más scraper |
+|---|---|---|
+| Ár Ft-ban | `price_huf` (nem null) | `price.amount` vagy `listing_price.amount`, a `formatted_amount`/currency pénznemének ellenőrzésével |
+| Ár bizonyítéka | `price_source`, nyers `price` | nyers ármező, illetve a hirdetés saját, egyértelmű Ft-ára a leírásban |
+| Város | `city` | `location.reverse_geocode.city` |
+| Régió | `county_code`, `region_ok` | `location.reverse_geocode.state`: `BU` = Budapest, `PE` = Pest vármegye |
+| Leírás | nem üres `description_text` | nem üres `description.text`, szöveges `description`, majd `description_evidence` |
+
+- A `price.amount: "269900"` **269 900 Ft**, ha a hozzá tartozó `formatted_amount` HUF/Ft. Ne várj külön `price_huf` mezőt a régi exportban. Az `amount_with_offset_in_currency` nem a helyi forintár: ne használd, ne szorozd/osszd automatikusan százzal.
+- Ha a strukturált ár tényleg hiányzik, a hirdetés saját leírásának egyértelmű, teljes gépre szóló Ft-ára használható **„leírás szerint”** forrásjelöléssel. A strukturált mező hiánya önmagában nem tiltja a shortlistet. Ne használj alkatrész/opció/beszámítási árat teljes konfiguráció áraként. Eltérő kártya- és leírásárat mindkettőt közöld; végleges ár tisztázandó. Pénzár nélküli cserehirdetés nem kereten belüli vétel.
+- A `location.reverse_geocode` önmagában helybizonyíték, nem kell egy másik scraper által gyártott „helyi” címke. `state=PE`, `city=Ráckeve` **igazolt Pest vármegyei adat**; Gödöllő, Aszód, Apaj és Gyál is ugyanígy kezelhető PE kóddal. Ne minősítsd őket területen kívülinek vagy ismeretlennek pusztán azért, mert nem Budapest. Városnév kód nélkül földrajzi ellenőrzéssel igazolható. Ellentmondó átvételi helyet külön jelölj; a strukturált hely nem jelent személyes ellenőrzést vagy garantált elérhetőséget.
+- `description={"text":""}` nem teljes leírás, még `public_details_read` státusz mellett sem. A teljes oldal login- és ajánlószövege nem hirdetésleírás. A címben szereplő konfigurációt „csak címadat” jelöléssel őrizd meg; ne töltsd ki belőle a hiányzó buildet és tárhelyet.
+- Hiányzó ár a vételi értékelést érinti, **nem teszi önmagában pontozhatatlanná az ismert hardvert**. Hiányzó pontos CPU/GPU viszont nem adhat kitalált összpontot. Integrált grafika is konkrét GPU lehet: dedikált GPU hiánya nem azonos GPU-adathiánnyal, ha az iGPU a pontos CPU-ból gyártói forrással azonosítható.
+- Ár-/helyhiányról szóló, minden Facebook-tételre érvényes állítás előtt számold meg a tényleges mezőket. A v2 `counts` segít, de a rekordok az elsődlegesek. Átalakítás után ellenőrizd, hogy nem csökkent az árral/helyadattal rendelkező rekordok száma.
+
+### Vásárlási megfelelés számolással
+
+A három minimum külön feltétel: RAM legalább 32GB; legalább egy SSD 500/512GB vagy nagyobb; összes belső SSD+HDD legalább 1000GB. Ezek nem helyettesítik egymást. A hirdetett névleges kapacitást használd, ne a TiB-ben kijelzett formázott értéket.
+
+| Hirdetett tárhely | SSD-minimum | 1TB összminimum | Státusz |
+|---|---|---|---|
+| 240+500GB SSD | igen | **nem: 740GB** | bővítendő |
+| 500+220GB SSD+1TB HDD | igen | igen: 1720GB | tárhely megfelel |
+| 512GB SSD | igen | nem | bővítendő |
+| 480GB SSD+3TB HDD | **nem** | igen | SSD bővítendő |
+| 2×500GB SSD vagy 1TB SSD | igen | igen | tárhely megfelel |
+
+Az összes követelményt teljesítő, ismert árú Budapest/Pest gép „megfelel a leírás szerint”, a szokásos vásárlás előtti ellenőrzésekkel. A kötelező bővítéses gép a bevezetőben, táblázatban és shortlistben is **bővítendő** marad. A jobb ár nem törli a hiányt. 350 ezer Ft-os gép is keretkockázatos, ha még kötelező bővítés kell. Ismeretlen végleges árnál ezt jelöld, ne találj ki költséget. A 64GB kívánatos fejlesztés, nem alapminimum: költsége csak akkor kötelező, ha a felhasználó kéri.
+
+Garanciadátumot a valódi gyűjtési dátummal hasonlíts össze. 2026. április **múltbeli** 2026. október 13-hoz képest. „2026. áprilisi vásárlás” nem automatikusan garancialejárat, és nem önmagában hiba. Bizonytalan dátumot ne nevezz tévesen jövőbelinek. RAM-foglalatszám és maximális kapacitás eltérő fogalom: a 64GB-os támogatást ellenőrizd, ne következtess arra, hogy nincs bővítési út egy rosszul megfogalmazott hirdetésből.
+
+### Következetes szakmai becslés
+
+Egy aktuális futásban **egyetlen értékelési rekordot** készíts hirdetésenként: ismert hardver, hat részpont, ezek összege, megfelelési státusz, indok. Ebből állítsd elő a teljes táblát, shortlistet és rövid választ. Ugyanaz a gép nem lehet egyszer 758, máshol 788 pont; ugyanaz a 740GB tárhely nem lehet egyszer megfelelő, máshol hiányos. Ár és forrás (Facebook/Jófogás) nem változtatja meg a teljesítménypontot. A rangsor a hirdetett állapotról szól; bővítés utáni pontot külön jelölj.
+
+A következő **kézzel választott referencia-becslések** a korábbi válasz skáláját rögzítik, nem benchmarkok vagy újonnan mért algoritmus. Csak az itt leírt konfigurációhoz használhatók viszonyításként; ne köss pontot hirdetés-URL-hez. Más RAM, SSD, GPU vagy CPU esetén a megfelelő részpontot módosítsd, indokkal. A build-pontot mindig a konkrét táp/hűtő/alaplap/garancia alapján add meg, ismeretlen adatra ne adj maximális pontot.
+
+| Referenciakonfiguráció | Neural DSP /300 | Serum-Ableton /250 | SSO /200 | Resolve /150 | Tárhely /50 | Build /50 | Összeg |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 7500F, RTX4060, 32GB DDR5, 1TB NVMe; táp/hűtő ismeretlen | 285 | 235 | 166 | 100 | 30 | 25 | 841 |
+| 5800X3D, RX6600XT, 32GB, 500+220GB SSD+1TB HDD; Pure Rock2, B450, Chieftec GPE-500S | 254 | 217 | 169 | 87 | 33 | 30 | 790 |
+| i5-12400F, RTX3070, 32GB, 240+500GB SSD; gyári hűtő, B660, GPS-700A8 | 248 | 210 | 144 | 110 | 20 | 24 | 756 |
+| i5-12400T, iGPU, 32GB, 512GB NVMe, gyári mini kivitel | 228 | 191 | 135 | 43 | 20 | 38 | 655 |
+| i5-9400F, RTX2060 6GB, 32GB, 1TB Intel660p; Hyper212, B360, Essence600W | 187 | 141 | 151 | 77 | 27 | 27 | 610 |
+
+Az audio-prioritás miatt a GPU nem írja felül az első két CPU-kategóriát. Az 5800X3D játékos gyorsítótára nem automatikus Neural DSP/Serum-előny; a fenti 7500F konfiguráció audio-részpontjai magasabbak. SSO-nál a 32GB/SSD adottságokat értékeld, ne pusztán CPU-feliratot. A kevés SSD-s gépre ne adj majdnem maximális tárhelypontot. CPU/GPU nélkül ne pótold az összpontot a cím vagy a régi hirdetés alapján. Bizonytalan GPU-változatnál feltételes sávot is adhatsz, feltételével együtt.
+
+### Az eredmény szerkezete és záró ellenőrzése
+
+1. Indíts a **legjobb, alapkereten belüli és minimumokat teljesítő vétellel** (teljes cím, link, ár, pont, rövid indok). Ha ilyen nincs, ezt mondd ki, és a legjobb bővítendő jelölt végleges árát nevezd tisztázandónak. Facebookot ne sorold hátra pusztán a forrás miatt.
+2. Adj rövid összehasonlító táblát a legerősebb audio-jelöltről (akár indokolt 300–350 ezres kivétel), a jó ár/értékű alternatíváról és az olcsóbb kompromisszumról. Ugyanazokat a pontokat és státuszokat használd, mint a teljes eredményben.
+3. Közöld a friss forrásonkénti/egyedi rekordszámot, a nem üres leírások és pontozható gépek számát, dátumot, szűrést, gyűjtési korlátot. Ezek a futásból számított adatok, **nem rögzített 35/24/11 vagy 20 darabos célok**.
+4. A **teljes teljesítményrangsort pont szerint csökkenően** rendezd, közösen Jófogás/Facebookból, árra és shortlist-státuszra tekintet nélkül. 851 pont nem kerülhet 819 mögé teljesítményrangként. A vásárlási shortlist külön sorrend, ár/érték és bővítések alapján. A nem pontozható tételeket a végére tedd, „—” helyezéssel, soha ne üres kitöltő sorral. Minden egyedi URL pontosan egy tétel legyen; alkatrész és laptop is kapjon indokolt státuszt.
+5. Nagy listánál add át kattintható fájlként a teljes táblát és shortlistet, részpontokkal, 64GB-os úttal és ellenőrizendő adatokkal. Ha a felhasználó gépéről nem elérhető a futtatókörnyezet `/home/...` fájlja, használd a rendelkezésre álló fájlcsatolási/letöltési módot, vagy írd ki a teljes táblát a chatbe. Egy távoli, nem hozzáférhető abszolút útvonal önmagában nem átadott eredmény.
+6. Véglegesítés előtt programmal ellenőrizd a részpontösszeget, a korlátokat (300/250/200/150/50/50), a csökkenő pontsorrendet, az egyedi URL-ek teljes lefedését, az üres sorok hiányát és a minimumok számolt teljesülését. A rövid választ ugyanebből a strukturált értékelésből készítsd. Eltérő mai kínálat és részleges gyűjtés adhat eltérő legjobb vételt; ne másold egy korábbi válasz győztesét vagy találatszámát.
