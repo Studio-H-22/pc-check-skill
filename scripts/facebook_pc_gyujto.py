@@ -2,9 +2,57 @@
 Nincs fizetős API, proxy, bejelentkezési adat vagy végtelen újrapróbálás.
 """
 import argparse,json,re,time
+from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.parse import urlencode
 from playwright.sync_api import sync_playwright
+
+def description_text(record):
+    value=record.get('description')
+    text=value.get('text','') if isinstance(value,dict) else value
+    return (text or record.get('description_evidence') or '').strip()
+
+def normalize_record(record):
+    """Őrizd meg a nyers mezőket, és exportálj egyértelmű, helyi ár/hely adatot."""
+    price=record.get('price') or record.get('listing_price') or {}
+    amount=price.get('amount') if isinstance(price,dict) else None
+    formatted=price.get('formatted_amount','') if isinstance(price,dict) else ''
+    record['price_huf']=None
+    # A budapesti keresés HUF árainál amount már forint, nem kell *100.
+    currency=price.get('currency') if isinstance(price,dict) else None
+    if isinstance(currency,dict):currency=currency.get('code')
+    known_huf=currency=='HUF' or bool(re.search(r'HUF|\bFt\b',formatted,re.I))
+    if known_huf and amount is not None:
+        try:
+            number=Decimal(str(amount))
+            if number.is_finite() and number>0 and number==number.to_integral_value():
+                record['price_huf']=int(number)
+        except (InvalidOperation,ValueError):pass
+    record['price_source']='price.amount' if record['price_huf'] is not None else None
+    loc=(record.get('location') or {}).get('reverse_geocode',{})
+    record['city']=loc.get('city')
+    record['county_code']=loc.get('state')
+    record['region_ok']=loc.get('state') in ('BU','PE') if loc.get('state') else None
+    record['description_text']=description_text(record)
+    if record.get('detail_status')=='public_details_read' and not record['description_text']:
+        record['detail_status']='no_description'
+    return record
+
+def merge_record(old,new):
+    """Részletes vagy ismételt rekord nem törölheti az olvasható ár/hely mezőt."""
+    for key,value in new.items():
+        if value is None or value=='' or value=={}:continue
+        if key=='description' and len(description_text(new))<=len(description_text(old)):continue
+        if key in ('price','location') and isinstance(value,dict) and isinstance(old.get(key),dict):
+            # Az oldal ismételt, rövidített objektuma gyakran csak részmezőket ad.
+            def merge_dict(target,source):
+                for k,v in source.items():
+                    if isinstance(v,dict) and isinstance(target.get(k),dict):merge_dict(target[k],v)
+                    elif v is not None and v!='':target[k]=v
+            merge_dict(old[key],value)
+        else:old[key]=value
+    return old
 
 def extract_records(html):
     found={}
@@ -13,7 +61,8 @@ def extract_records(html):
             title=obj.get('marketplace_listing_title')
             ident=str(obj.get('id',''))
             if title and ident.isdigit():
-                found[ident]={'id':ident,'title':title,'url':f'https://www.facebook.com/marketplace/item/{ident}/','price':obj.get('listing_price'), 'location':obj.get('location'),'description':obj.get('redacted_description') or obj.get('description')}
+                record={'id':ident,'title':title,'url':f'https://www.facebook.com/marketplace/item/{ident}/','price':obj.get('listing_price'), 'location':obj.get('location'),'description':obj.get('redacted_description') or obj.get('description')}
+                found[ident]=merge_record(found.get(ident,{}),record)
             for v in obj.values():walk(v)
         elif isinstance(obj,list):
             for v in obj:walk(v)
@@ -51,7 +100,7 @@ def main():
             records={}; unchanged=0
             while time.monotonic()<deadline:
                 html=page.content()
-                for r in extract_records(html):records[r['id']]=r
+                for r in extract_records(html):records[r['id']]=merge_record(records.get(r['id'],{}),r)
                 for el in page.locator('a[href*="/marketplace/item/"]').all()[:a.limit]:
                     href=el.get_attribute('href') or ''; m=re.search(r'/marketplace/item/(\d+)',href)
                     if m and m[1] not in records:
@@ -79,19 +128,27 @@ def main():
                     r['detail_text']=page.locator('body').inner_text()[:30000]
                     detail_rows=extract_records(page.content())
                     match=next((x for x in detail_rows if x['id']==r['id']),None)
-                    if match and match.get('description'):r['description']=match['description']
+                    if match:merge_record(r,match)
+                    if description_text(r):pass
                     elif '\nDetails\n' in r['detail_text']:
                         section=r['detail_text'].split('\nDetails\n',1)[1]
                         for end in ['\nSeller information\n','\nSeller details\n','\nSend seller a message\n']:
                             section=section.split(end,1)[0]
                         r['description_evidence']=section.strip()
-                    r['detail_status']='public_details_read' if r.get('description') or r.get('description_evidence') else ('login_required' if page.get_by_role('textbox',name=re.compile('Email|phone',re.I)).count() else 'no_description')
+                    r['detail_status']='public_details_read' if description_text(r) else ('login_required' if page.get_by_role('textbox',name=re.compile('Email|phone',re.I)).count() else 'no_description')
                 except Exception as e:r['detail_status']=type(e).__name__
             result['notes'].append('Nyilvános, bejelentkezés nélküli próba; ár/hely/RAM utószűrés szükséges. A keresés és időkorlát nem teljes kínálat.')
         except Exception as e:
             result['status']='technical_error';result['error']=type(e).__name__+': '+str(e)[:500]
         finally:browser.close()
     result['elapsed_seconds']=round(time.monotonic()-started,2)
+    result['schema_version']=2
+    result['collected_at']=datetime.now(timezone.utc).isoformat()
+    result['records']=[normalize_record(r) for r in result['records']]
+    result['counts']={'records':len(result['records']),
+        'with_price_huf':sum(r['price_huf'] is not None for r in result['records']),
+        'budapest_pest':sum(r['region_ok'] is True for r in result['records']),
+        'with_description':sum(bool(r['description_text']) for r in result['records'])}
     Path(a.output).parent.mkdir(parents=True,exist_ok=True)
     Path(a.output).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps({k:result[k] for k in ['status','elapsed_seconds','scraper_cost_usd']},ensure_ascii=False), 'records='+str(len(result['records'])))
