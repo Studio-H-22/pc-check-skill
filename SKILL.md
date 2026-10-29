@@ -1,6 +1,6 @@
 ---
 name: pc-performance-scorer
-description: Jófogás-, Facebook Marketplace- és HardverApró PC-hirdetések audio-központú gyűjtése, értékelése és /1000 rangsorolása Neural DSP, Serum, Spitfire SSO, Ableton és DaVinci használatra. A „pc check”, „pc skill”, PC-rangsor és PC-hirdetés-összehasonlítás kéréseknél használd; nem a saját számítógép állapotdiagnosztikája.
+description: Jófogás-, Facebook Marketplace-, HardverApró-, Furbify- és KomPhone PC-ajánlatok audio-központú gyűjtése, értékelése és /1000 rangsorolása Neural DSP, Serum, Spitfire SSO, Ableton és DaVinci használatra. A „pc check”, „pc skill”, PC-rangsor és PC-hirdetés-összehasonlítás kéréseknél használd; nem a saját számítógép állapotdiagnosztikája.
 ---
 
 # Audio-központú PC performance scorer
@@ -13,7 +13,7 @@ Magyarul készíts teljes rangsort és külön vásárlási shortlistet. Csak az
 
 A skill forrása: https://github.com/Studio-H-22/pc-check-skill. A „pc check”, „check pc” és „pc skill” hívószónál olvasd el a repó README.md és SKILL.md fájlját. A teljes scripts és references mappát is telepítsd; egyetlen SKILL.md önmagában nem tartalmazza a gyűjtőket. A repó nyilvános, olvasásához nem kell GitHub-bejelentkezés. Ha a friss hálózati olvasás nem sikerül, használd a telepített példányt, röviden jelezve a korlátot. Rögzített commitból kért futásnál azt a változatot használd, ne frissítsd csendben másik verzióra.
 
-A skill más felhasználó által is használható. A lentiek alapértékek, nem mindenki kötelező vásárlási feltételei. A felhasználó aktuális keresőkifejezése, helyszíne, ársávja, RAM-/tárhelyigénye és vásárlási kerete felülírja őket; ne változtasd meg a programot csak egy keresés kedvéért. A pontozás audio-központú: eltérő felhasználási cél esetén közöld ezt, és csak kifejezett kérésre alakítsd át a pontsúlyokat. Alaphelyszín Budapest és Pest vármegye mindhárom forrásnál (Jófogás, Facebook, HardverApró); más hely vagy országos gyűjtés megadható. A helyi telepítés nem szinkronizálódik automatikusan más gépre vagy minden ChatGPT-beszélgetésbe.
+A skill más felhasználó által is használható. A lentiek alapértékek, nem mindenki kötelező vásárlási feltételei. A felhasználó aktuális keresőkifejezése, helyszíne, ársávja, RAM-/tárhelyigénye és vásárlási kerete felülírja őket; ne változtasd meg a programot csak egy keresés kedvéért. A pontozás audio-központú: eltérő felhasználási cél esetén közöld ezt, és csak kifejezett kérésre alakítsd át a pontsúlyokat. Alaphelyszín Budapest és Pest vármegye a hirdetésportáloknál (Jófogás, Facebook, HardverApró); a Furbify és KomPhone webshop országos kiszállítású, helyszűrő nélkül. Más hely vagy országos aprógyűjtés megadható. A helyi telepítés nem szinkronizálódik automatikusan más gépre vagy minden ChatGPT-beszélgetésbe.
 ## Rövid és ingyenes alapfolyamat
 
 **Kötelező adatfeldolgozás és válaszellenőrzés:** a [Mezők, egységes pontozás és válaszforma](#mezők-egységes-pontozás-és-válaszforma) rész az alapfolyamat része minden futtatónál (Codex, OpenClaw vagy más Python-képes asszisztens). Ezt ne hagyd ki más környezetben sem. A nyers JSON-t olvasd, ne csak egy átalakított táblázatot vagy a gyűjtő naplóját.
@@ -27,6 +27,10 @@ A felhasználó pontosítása: a **folyamat volt túl hosszú, nem az elemzés**
 Facebookhoz rendelkezésre áll a tesztelt, helyi [scripts/facebook_pc_gyujto.py](scripts/facebook_pc_gyujto.py). Csak Playwright kell hozzá, nincs AI/API-kulcs/proxy. Példa: `python -X utf8 <skill>/scripts/facebook_pc_gyujto.py --keyword "pc 32gb" --min-price 40000 --max-price 400000 --location budapest --limit 50 --details 30 --timeout 60 --output facebook-pc.json`. A limit felső határ, nem ígért találatszám; ez az első nyilvános találati adagot gyűjti, nem teljes Marketplace-kínálatot. Az első beállítás után ne telepíts újra csomagokat, és ne indítsd a nagy monitor teljes AI/webszerver/értesítési rendszerét. A részletekhez meg kell várni a betöltést: az első pillanatban látszó loginpanel nem bizonyítja önmagában, hogy a nyilvános leírás elérhetetlen. Konkrét hozzáférési akadálynál nincs fizetős pótlás.
 
 HardverApróhoz: [scripts/hardverapro_pc_gyujto.py](scripts/hardverapro_pc_gyujto.py). Ugyanaz a Playwright/BeautifulSoup környezet, kredit nélkül. A **Komplett asztali PC** kategóriában keres (`pc_szerver/asztali_gep/komplett_asztali_pc`). Alaphelyszínhez futtasd külön `--location budapest` és `--location pest`, majd URL alapján deduplikálj. Példa: `python -X utf8 <skill>/scripts/hardverapro_pc_gyujto.py --keyword "32gb" --min-price 40000 --max-price 400000 --location budapest --max-pages 5 --details 40 --timeout 180 --output hardverapro-budapest.json`. A JSON mellett `.txt` másolat is készül. Országos: `--location magyarorszag`. A `city` mezőben több település is szerepelhet; a shortlistnél az igazolt Budapest/Pest érintettséget nézd, ne csak a megyeszűrőt.
+
+Furbifyhez: [scripts/furbify_pc_gyujto.py](scripts/furbify_pc_gyujto.py) — `https://www.furbify.hu/` felújított asztali/gamer PC (`/szamitogep`, `/szamitogep/gaming-pc-k`). Adatlap mezők: Processzor, Memória, Háttértár, Videokártya, Készlet. Alapból kihagyja a „Nincs készleten” tételeket. Példa: `python -X utf8 <skill>/scripts/furbify_pc_gyujto.py --min-price 40000 --max-price 400000 --details 40 --timeout 180 --output furbify-pc.json`.
+
+KomPhone-hoz: [scripts/komphone_pc_gyujto.py](scripts/komphone_pc_gyujto.py) — `https://www.komphone.hu/` (felújított gamer + belépő új konfig kategóriák). A cím `16/32/64GB` sávja **nem** alapkonfig; a termékoldal **Memória** / **SSD** mezője a mérvadó (gyakran 16GB + 480GB az alapárban). Példa: `python -X utf8 <skill>/scripts/komphone_pc_gyujto.py --min-price 40000 --max-price 400000 --details 40 --timeout 180 --output komphone-pc.json`. Az új belépő gépek gyakran 400 ezer Ft felettiek — jelezd, ha az ársávban kevés a találat.
 
 Legyen rövid induló mondat; a köztes állapotjelzések csak érdemi új információt közöljenek. Ne gyűjts újra pusztán a kész értékelés szerkesztése miatt. A technikai hibakeresést és a csomagkeresést ne végezd újra minden PC checknél.
 
@@ -54,7 +58,7 @@ A helyőrzőket a tényleges, abszolút útvonalakkal helyettesítsd; szóközt 
 - `pc 32gb.txt`: számozott hirdetések, cím, ár, URL és leírás.
 - `debug_oldal.html`: ha nem találja a várt oldaladatokat.
 
-Alapbeállítás: **Budapest és Pest vármegye, Jófogáson, Facebookon és HardverAprón**; `pc 32gb` (HardverAprón elég a `32gb` is, a kategória már komplett PC), 40 000–400 000 Ft, legfeljebb 10 Jófogás-oldal / 5 HardverApró-oldal keresésenként. Jófogáson és HardverAprón külön `--location budapest` és `--location pest` keresést futtass, majd URL alapján deduplikálj. Facebookon a budapesti keresés találatait az igazolt Budapest/Pest helyadat alapján szűrd; a keresési középpont önmagában nem biztosítja a területi megfelelést. Más vármegyei és ismeretlen helyű találatot ne ajánlj a területi shortlistben. Országos keresés csak új, kifejezett kérésre induljon. Az oldal- és időkorlát miatt ez nem feltétlenül teljes Budapest/Pest kínálat.
+Alapbeállítás: **Budapest és Pest vármegye** a három apróforrásnál; plusz **Furbify** és **KomPhone** webshop (országos). Kulcsszó: `pc 32gb` (HardverAprón elég a `32gb`), 40 000–400 000 Ft, legfeljebb 10 Jófogás-oldal / 5 HardverApró-oldal. Jófogáson és HardverAprón külön `--location budapest` és `--location pest`, majd URL deduplikálás. Facebookon az igazolt Budapest/Pest helyadat szerint szűrj. Furbify/KomPhone helyszűrő nélkül fut. Más vármegyei aprótalálatot ne ajánlj a területi shortlistben. Országos aprókeresés csak kifejezett kérésre.
 
 ### A felhasználó által kért szűrők
 
@@ -153,6 +157,11 @@ A [scripts/hardverapro_pc_gyujto.py](scripts/hardverapro_pc_gyujto.py) kimenete 
 - A `city` gyakran több település (`Budapest, Debrecen, Szeged`): ez átvételi/postaopció, nem automatikus Budapest-lakcim. Shortlistnél jelezd; ne zárd ki pusztán a többi város említése miatt, ha a keresés budapesti/pesti megyeszűrővel ment.
 - Sok találat kereskedői „GAMER MAX / 16-32GB / feláras bővítés” sablon: mindig az [Alapkonfig vs. feláras opció](#alapkonfig-vs-feláras-opció-kötelező) szabályt alkalmazd a leírásra, ne a cím marketingjére.
 
+### Furbify / KomPhone webshop
+
+- **Furbify** (`furbify-pc.json`): `specs` / adatlap mezők a mérvadók; `stock` = Készlet. „Nincs készleten” alapból kimarad. Országos webshop — Budapest/Pest shortlist-helynek számít (házhozszállítás), jelezd a forrást.
+- **KomPhone** (`komphone-pc.json`): `specs.Memória` és `specs.SSD` az alapár; a `16/32/64GB` a címben választható felár. 480GB SSD **nem** teljesíti a 500/512GB SSD-minimumot.
+
 ### Facebook: a nyers adat a mérvadó
 
 A helyi Facebook-gyűjtő kimenete egy objektum, a hirdetések a `records` tömbben vannak. A nyers kimenetet az esetleges saját `listings.json` átalakítás mellett is tartsd meg. Átalakításnál őrizd meg az ár, pénznem, hely, leírás, ID és URL bizonyítékát; ha egy új táblázatból hiányoznak, az átalakítás hibája nem a Facebook adathiánya. A `schema_version: 2` export egyértelmű felső szintű mezőket is ad **minden rekordon belül**:
@@ -184,6 +193,7 @@ A három minimum külön feltétel: RAM legalább 32GB; legalább egy SSD 500/51
 | 480GB SSD+3TB HDD | **nem** | igen | SSD bővítendő |
 | 2×500GB SSD vagy 1TB SSD | igen | igen | tárhely megfelel |
 | 16–32GB RAM sáv + 512GB SSD (1TB felár) | RAM: **nem** (16GB) | nem | bővítendő |
+| KomPhone `16/32/64GB` cím, Memória: 16GB, SSD: 480GB | RAM: nem; SSD: **nem** (480) | nem | bővítendő |
 | 32GB + 500GB NVMe + 3TB HDD | igen | igen | tárhely megfelel |
 
 Véglegesítés előtt **legalább a shortlist és a „megfelel” jelöltek** leírását olvasd vissza: ha a cím 32GB-ot mond, de a törzs 16GB-ot vagy „bővítés +X Ft”-ot, javítsd a státuszt. A mai HardverApró-kereskedői listákon ez gyakori.
@@ -213,6 +223,6 @@ Az audio-prioritás miatt a GPU nem írja felül az első két CPU-kategóriát.
 1. Indíts a **legjobb, alapkereten belüli és minimumokat teljesítő vétellel** (teljes cím, link, ár, pont, rövid indok). Ha ilyen nincs, ezt mondd ki, és a legjobb bővítendő jelölt végleges árát nevezd tisztázandónak. Facebookot ne sorold hátra pusztán a forrás miatt.
 2. Adj rövid összehasonlító táblát a legerősebb audio-jelöltről (akár indokolt 300–350 ezres kivétel), a jó ár/értékű alternatíváról és az olcsóbb kompromisszumról. Ugyanazokat a pontokat és státuszokat használd, mint a teljes eredményben.
 3. Közöld a friss forrásonkénti/egyedi rekordszámot, a nem üres leírások és pontozható gépek számát, dátumot, szűrést, gyűjtési korlátot. Ezek a futásból számított adatok, **nem rögzített 35/24/11 vagy 20 darabos célok**.
-4. A **teljes teljesítményrangsort pont szerint csökkenően** rendezd, közösen Jófogás/Facebook/HardverApró forrásból, árra és shortlist-státuszra tekintet nélkül. 851 pont nem kerülhet 819 mögé teljesítményrangként. A vásárlási shortlist külön sorrend, ár/érték és bővítések alapján. A nem pontozható tételeket a végére tedd, „—” helyezéssel, soha ne üres kitöltő sorral. Minden egyedi URL pontosan egy tétel legyen; alkatrész és laptop is kapjon indokolt státuszt.
+4. A **teljes teljesítményrangsort pont szerint csökkenően** rendezd, közösen Jófogás/Facebook/HardverApró/Furbify/KomPhone forrásból, árra és shortlist-státuszra tekintet nélkül. 851 pont nem kerülhet 819 mögé teljesítményrangként. A vásárlási shortlist külön sorrend, ár/érték és bővítések alapján. A nem pontozható tételeket a végére tedd, „—” helyezéssel, soha ne üres kitöltő sorral. Minden egyedi URL pontosan egy tétel legyen; alkatrész és laptop is kapjon indokolt státuszt.
 5. Nagy listánál add át kattintható fájlként a teljes táblát és shortlistet, részpontokkal, 64GB-os úttal és ellenőrizendő adatokkal. Ha a felhasználó gépéről nem elérhető a futtatókörnyezet `/home/...` fájlja, használd a rendelkezésre álló fájlcsatolási/letöltési módot, vagy írd ki a teljes táblát a chatbe. Egy távoli, nem hozzáférhető abszolút útvonal önmagában nem átadott eredmény.
 6. Véglegesítés előtt programmal ellenőrizd a részpontösszeget, a korlátokat (300/250/200/150/50/50), a csökkenő pontsorrendet, az egyedi URL-ek teljes lefedését, az üres sorok hiányát és a minimumok számolt teljesülését. A rövid választ ugyanebből a strukturált értékelésből készítsd. Eltérő mai kínálat és részleges gyűjtés adhat eltérő legjobb vételt; ne másold egy korábbi válasz győztesét vagy találatszámát.

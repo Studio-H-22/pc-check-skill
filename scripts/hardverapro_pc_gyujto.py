@@ -141,18 +141,8 @@ def submit_search(page, keyword: str, min_price: int, max_price: int, location: 
     stcid = "" if county is None else str(county[0])
     stcid_text = "" if county is None else county[1]
 
-    # 1) Közvetlen GET (Pest/országos és sokszor Budapest is stabil süti után)
-    direct = build_search_url(keyword, min_price, max_price, location)
-    print(f"   [INFO] Kereső GET: {direct}")
-    safe_goto(page, direct)
-    accept_cookie_banner(page)
-    if _on_search_results(page):
-        return
-
-    # 2) Űrlap + navigációvárás (Budapest stcid=0 GET néha indexre esik)
-    print("   [INFO] GET nem adott keresőtalálatot; űrlapos próbálkozás.")
-    safe_goto(page, land)
-    accept_cookie_banner(page)
+    # 1) Űrlap előbb (GET Budapestnál gyakran indexre esik süti után is)
+    print("   [INFO] Kereső űrlap beküldése…")
     try:
         with page.expect_navigation(timeout=45000, wait_until="domcontentloaded"):
             page.evaluate(
@@ -190,6 +180,14 @@ def submit_search(page, keyword: str, min_price: int, max_price: int, location: 
         print(f"   [WARN] Űrlap-navigáció: {exc}")
 
     page.wait_for_timeout(1500)
+    if _on_search_results(page):
+        return
+
+    # 2) Tartalék GET
+    direct = build_search_url(keyword, min_price, max_price, location)
+    print(f"   [INFO] Űrlap sikertelen; tartalék GET: {direct}")
+    safe_goto(page, direct)
+    accept_cookie_banner(page)
     if not _on_search_results(page):
         print(f"   [ERROR] Nincs érvényes keresőoldal ({page.url}).")
 
