@@ -1,6 +1,6 @@
 ---
 name: pc-performance-scorer
-description: Jófogás- és Facebook Marketplace PC-hirdetések audio-központú gyűjtése, értékelése és /1000 rangsorolása Neural DSP, Serum, Spitfire SSO, Ableton és DaVinci használatra. A „pc check”, „pc skill”, PC-rangsor és PC-hirdetés-összehasonlítás kéréseknél használd; nem a saját számítógép állapotdiagnosztikája.
+description: Jófogás-, Facebook Marketplace- és HardverApró PC-hirdetések audio-központú gyűjtése, értékelése és /1000 rangsorolása Neural DSP, Serum, Spitfire SSO, Ableton és DaVinci használatra. A „pc check”, „pc skill”, PC-rangsor és PC-hirdetés-összehasonlítás kéréseknél használd; nem a saját számítógép állapotdiagnosztikája.
 ---
 
 # Audio-központú PC performance scorer
@@ -13,7 +13,7 @@ Magyarul készíts teljes rangsort és külön vásárlási shortlistet. Csak az
 
 A skill forrása: https://github.com/Studio-H-22/pc-check-skill. A „pc check”, „check pc” és „pc skill” hívószónál olvasd el a repó README.md és SKILL.md fájlját. A teljes scripts és references mappát is telepítsd; egyetlen SKILL.md önmagában nem tartalmazza a gyűjtőket. A repó nyilvános, olvasásához nem kell GitHub-bejelentkezés. Ha a friss hálózati olvasás nem sikerül, használd a telepített példányt, röviden jelezve a korlátot. Rögzített commitból kért futásnál azt a változatot használd, ne frissítsd csendben másik verzióra.
 
-A skill más felhasználó által is használható. A lentiek alapértékek, nem mindenki kötelező vásárlási feltételei. A felhasználó aktuális keresőkifejezése, helyszíne, ársávja, RAM-/tárhelyigénye és vásárlási kerete felülírja őket; ne változtasd meg a programot csak egy keresés kedvéért. A pontozás audio-központú: eltérő felhasználási cél esetén közöld ezt, és csak kifejezett kérésre alakítsd át a pontsúlyokat. Alaphelyszín Budapest és Pest vármegye mindkét forrásnál; más hely vagy országos gyűjtés megadható. A helyi telepítés nem szinkronizálódik automatikusan más gépre vagy minden ChatGPT-beszélgetésbe.
+A skill más felhasználó által is használható. A lentiek alapértékek, nem mindenki kötelező vásárlási feltételei. A felhasználó aktuális keresőkifejezése, helyszíne, ársávja, RAM-/tárhelyigénye és vásárlási kerete felülírja őket; ne változtasd meg a programot csak egy keresés kedvéért. A pontozás audio-központú: eltérő felhasználási cél esetén közöld ezt, és csak kifejezett kérésre alakítsd át a pontsúlyokat. Alaphelyszín Budapest és Pest vármegye mindhárom forrásnál (Jófogás, Facebook, HardverApró); más hely vagy országos gyűjtés megadható. A helyi telepítés nem szinkronizálódik automatikusan más gépre vagy minden ChatGPT-beszélgetésbe.
 ## Rövid és ingyenes alapfolyamat
 
 **Kötelező adatfeldolgozás és válaszellenőrzés:** a [Mezők, egységes pontozás és válaszforma](#mezők-egységes-pontozás-és-válaszforma) rész az alapfolyamat része minden futtatónál (Codex, OpenClaw vagy más Python-képes asszisztens). Ezt ne hagyd ki más környezetben sem. A nyers JSON-t olvasd, ne csak egy átalakított táblázatot vagy a gyűjtő naplóját.
@@ -25,6 +25,8 @@ Használd a meglévő Jófogás Pythont, a már működő Python-környezetből;
 A felhasználó pontosítása: a **folyamat volt túl hosszú, nem az elemzés**. Nincs kötelező top 3-as vagy 5-ös válaszkorlát. Adj teljes, használható rangsort és shortlistet, az eredeti címekkel/linkekkel; a nagy táblák külön fájlba kerülhetnek. A futási időt a működő környezet újrahasználatával, véges gyűjtéssel és felesleges újraellenőrzések elhagyásával csökkentsd, ne a találatok önkényes levágásával.
 
 Facebookhoz rendelkezésre áll a tesztelt, helyi [scripts/facebook_pc_gyujto.py](scripts/facebook_pc_gyujto.py). Csak Playwright kell hozzá, nincs AI/API-kulcs/proxy. Példa: `python -X utf8 <skill>/scripts/facebook_pc_gyujto.py --keyword "pc 32gb" --min-price 40000 --max-price 400000 --location budapest --limit 50 --details 30 --timeout 60 --output facebook-pc.json`. A limit felső határ, nem ígért találatszám; ez az első nyilvános találati adagot gyűjti, nem teljes Marketplace-kínálatot. Az első beállítás után ne telepíts újra csomagokat, és ne indítsd a nagy monitor teljes AI/webszerver/értesítési rendszerét. A részletekhez meg kell várni a betöltést: az első pillanatban látszó loginpanel nem bizonyítja önmagában, hogy a nyilvános leírás elérhetetlen. Konkrét hozzáférési akadálynál nincs fizetős pótlás.
+
+HardverApróhoz: [scripts/hardverapro_pc_gyujto.py](scripts/hardverapro_pc_gyujto.py). Ugyanaz a Playwright/BeautifulSoup környezet, kredit nélkül. A **Komplett asztali PC** kategóriában keres (`pc_szerver/asztali_gep/komplett_asztali_pc`). Alaphelyszínhez futtasd külön `--location budapest` és `--location pest`, majd URL alapján deduplikálj. Példa: `python -X utf8 <skill>/scripts/hardverapro_pc_gyujto.py --keyword "32gb" --min-price 40000 --max-price 400000 --location budapest --max-pages 5 --details 40 --timeout 180 --output hardverapro-budapest.json`. A JSON mellett `.txt` másolat is készül. Országos: `--location magyarorszag`. A `city` mezőben több település is szerepelhet; a shortlistnél az igazolt Budapest/Pest érintettséget nézd, ne csak a megyeszűrőt.
 
 Legyen rövid induló mondat; a köztes állapotjelzések csak érdemi új információt közöljenek. Ne gyűjts újra pusztán a kész értékelés szerkesztése miatt. A technikai hibakeresést és a csomagkeresést ne végezd újra minden PC checknél.
 
@@ -52,7 +54,7 @@ A helyőrzőket a tényleges, abszolút útvonalakkal helyettesítsd; szóközt 
 - `pc 32gb.txt`: számozott hirdetések, cím, ár, URL és leírás.
 - `debug_oldal.html`: ha nem találja a várt oldaladatokat.
 
-Alapbeállítás: **Budapest és Pest vármegye, mind Jófogáson, mind Facebook Marketplace-en**; `pc 32gb`, 40 000–400 000 Ft, legfeljebb 10 Jófogás-oldal keresésenként. Jófogáson külön `--location budapest` és `--location pest` keresést futtass, majd URL alapján deduplikálj. Facebookon a budapesti keresés találatait az igazolt Budapest/Pest helyadat alapján szűrd; a keresési középpont önmagában nem biztosítja a területi megfelelést. Más vármegyei és ismeretlen helyű találatot ne ajánlj a területi shortlistben. Országos keresés csak új, kifejezett kérésre induljon. Az oldal- és időkorlát miatt ez nem feltétlenül teljes Budapest/Pest kínálat.
+Alapbeállítás: **Budapest és Pest vármegye, Jófogáson, Facebookon és HardverAprón**; `pc 32gb` (HardverAprón elég a `32gb` is, a kategória már komplett PC), 40 000–400 000 Ft, legfeljebb 10 Jófogás-oldal / 5 HardverApró-oldal keresésenként. Jófogáson és HardverAprón külön `--location budapest` és `--location pest` keresést futtass, majd URL alapján deduplikálj. Facebookon a budapesti keresés találatait az igazolt Budapest/Pest helyadat alapján szűrd; a keresési középpont önmagában nem biztosítja a területi megfelelést. Más vármegyei és ismeretlen helyű találatot ne ajánlj a területi shortlistben. Országos keresés csak új, kifejezett kérésre induljon. Az oldal- és időkorlát miatt ez nem feltétlenül teljes Budapest/Pest kínálat.
 
 ### A felhasználó által kért szűrők
 
@@ -129,6 +131,10 @@ Az új szabály alapján például 500 GB SSD + 2 TB HDD és 2×500 GB SSD tárh
 
 ## Mezők, egységes pontozás és válaszforma
 
+### HardverApró: JSON + szöveges másolat
+
+A [scripts/hardverapro_pc_gyujto.py](scripts/hardverapro_pc_gyujto.py) kimenete JSON (`schema_version: 1`), a hirdetések a `records` tömbben. Mezők: `title`, `url`, `price_huf`, `price_text`, `city`, `description_text`, `detail_status`. A leírást a `description_text` (`.uad-content`) adja; üres leírásnál a címadatot „csak címadat” jelöléssel őrizd. `--location budapest` → megye-ID 0, `pest` → 13, `magyarorszag` → nincs megyeszűrő. A `.txt` oldalkimenet a Jófogás-szövegformához hasonló. Indexre esett (szűretlen kategórialista) futást ne értékeld szűrt HardverApró-találatként.
+
 ### Facebook: a nyers adat a mérvadó
 
 A helyi Facebook-gyűjtő kimenete egy objektum, a hirdetések a `records` tömbben vannak. A nyers kimenetet az esetleges saját `listings.json` átalakítás mellett is tartsd meg. Átalakításnál őrizd meg az ár, pénznem, hely, leírás, ID és URL bizonyítékát; ha egy új táblázatból hiányoznak, az átalakítás hibája nem a Facebook adathiánya. A `schema_version: 2` export egyértelmű felső szintű mezőket is ad **minden rekordon belül**:
@@ -166,7 +172,7 @@ Garanciadátumot a valódi gyűjtési dátummal hasonlíts össze. 2026. áprili
 
 ### Következetes szakmai becslés
 
-Egy aktuális futásban **egyetlen értékelési rekordot** készíts hirdetésenként: ismert hardver, hat részpont, ezek összege, megfelelési státusz, indok. Ebből állítsd elő a teljes táblát, shortlistet és rövid választ. Ugyanaz a gép nem lehet egyszer 758, máshol 788 pont; ugyanaz a 740GB tárhely nem lehet egyszer megfelelő, máshol hiányos. Ár és forrás (Facebook/Jófogás) nem változtatja meg a teljesítménypontot. A rangsor a hirdetett állapotról szól; bővítés utáni pontot külön jelölj.
+Egy aktuális futásban **egyetlen értékelési rekordot** készíts hirdetésenként: ismert hardver, hat részpont, ezek összege, megfelelési státusz, indok. Ebből állítsd elő a teljes táblát, shortlistet és rövid választ. Ugyanaz a gép nem lehet egyszer 758, máshol 788 pont; ugyanaz a 740GB tárhely nem lehet egyszer megfelelő, máshol hiányos. Ár és forrás (Facebook/Jófogás/HardverApró) nem változtatja meg a teljesítménypontot. A rangsor a hirdetett állapotról szól; bővítés utáni pontot külön jelölj.
 
 A következő **kézzel választott referencia-becslések** a korábbi válasz skáláját rögzítik, nem benchmarkok vagy újonnan mért algoritmus. Csak az itt leírt konfigurációhoz használhatók viszonyításként; ne köss pontot hirdetés-URL-hez. Más RAM, SSD, GPU vagy CPU esetén a megfelelő részpontot módosítsd, indokkal. A build-pontot mindig a konkrét táp/hűtő/alaplap/garancia alapján add meg, ismeretlen adatra ne adj maximális pontot.
 
@@ -185,6 +191,6 @@ Az audio-prioritás miatt a GPU nem írja felül az első két CPU-kategóriát.
 1. Indíts a **legjobb, alapkereten belüli és minimumokat teljesítő vétellel** (teljes cím, link, ár, pont, rövid indok). Ha ilyen nincs, ezt mondd ki, és a legjobb bővítendő jelölt végleges árát nevezd tisztázandónak. Facebookot ne sorold hátra pusztán a forrás miatt.
 2. Adj rövid összehasonlító táblát a legerősebb audio-jelöltről (akár indokolt 300–350 ezres kivétel), a jó ár/értékű alternatíváról és az olcsóbb kompromisszumról. Ugyanazokat a pontokat és státuszokat használd, mint a teljes eredményben.
 3. Közöld a friss forrásonkénti/egyedi rekordszámot, a nem üres leírások és pontozható gépek számát, dátumot, szűrést, gyűjtési korlátot. Ezek a futásból számított adatok, **nem rögzített 35/24/11 vagy 20 darabos célok**.
-4. A **teljes teljesítményrangsort pont szerint csökkenően** rendezd, közösen Jófogás/Facebookból, árra és shortlist-státuszra tekintet nélkül. 851 pont nem kerülhet 819 mögé teljesítményrangként. A vásárlási shortlist külön sorrend, ár/érték és bővítések alapján. A nem pontozható tételeket a végére tedd, „—” helyezéssel, soha ne üres kitöltő sorral. Minden egyedi URL pontosan egy tétel legyen; alkatrész és laptop is kapjon indokolt státuszt.
+4. A **teljes teljesítményrangsort pont szerint csökkenően** rendezd, közösen Jófogás/Facebook/HardverApró forrásból, árra és shortlist-státuszra tekintet nélkül. 851 pont nem kerülhet 819 mögé teljesítményrangként. A vásárlási shortlist külön sorrend, ár/érték és bővítések alapján. A nem pontozható tételeket a végére tedd, „—” helyezéssel, soha ne üres kitöltő sorral. Minden egyedi URL pontosan egy tétel legyen; alkatrész és laptop is kapjon indokolt státuszt.
 5. Nagy listánál add át kattintható fájlként a teljes táblát és shortlistet, részpontokkal, 64GB-os úttal és ellenőrizendő adatokkal. Ha a felhasználó gépéről nem elérhető a futtatókörnyezet `/home/...` fájlja, használd a rendelkezésre álló fájlcsatolási/letöltési módot, vagy írd ki a teljes táblát a chatbe. Egy távoli, nem hozzáférhető abszolút útvonal önmagában nem átadott eredmény.
 6. Véglegesítés előtt programmal ellenőrizd a részpontösszeget, a korlátokat (300/250/200/150/50/50), a csökkenő pontsorrendet, az egyedi URL-ek teljes lefedését, az üres sorok hiányát és a minimumok számolt teljesülését. A rövid választ ugyanebből a strukturált értékelésből készítsd. Eltérő mai kínálat és részleges gyűjtés adhat eltérő legjobb vételt; ne másold egy korábbi válasz győztesét vagy találatszámát.
