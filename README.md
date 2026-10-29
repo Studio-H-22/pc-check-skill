@@ -37,7 +37,7 @@ A pontozás elsősorban zenekészítésre és másodsorban videóvágásra kész
 - [Facebook Python](scripts/facebook_pc_gyujto.py): saját, ingyenes, nyilvános Marketplace-gyűjtő; API-kulcs és proxy nélkül.
 - [HardverApró Python](scripts/hardverapro_pc_gyujto.py): komplett asztali PC kategória, megye- és árszűrővel; JSON + `.txt` kimenet.
 - [Furbify Python](scripts/furbify_pc_gyujto.py): felújított asztali/gamer PC webshop.
-- [KomPhone Python](scripts/komphone_pc_gyujto.py): új/felújított gamer konfigok; alapkonfig a Memória/SSD mező.
+- [KomPhone Python](scripts/komphone_pc_gyujto.py): új/felújított gamer konfigok; `list_num` + related BFS + seed; alapkonfig a Memória/SSD mező.
 - [Függőségek](scripts/requirements.txt).
 - [Ingyenes gyűjtés és korlátai](references/free-collection.md).
 - [Apify régi opcionális eljárás](references/apify-marketplace.md): alapértelmezésben kikapcsolva; csak új, kifejezett Apify-kérésre használható.
@@ -60,7 +60,7 @@ python -X utf8 -u scripts/facebook_pc_gyujto.py --keyword "pc 32gb" --min-price 
 python -X utf8 -u scripts/hardverapro_pc_gyujto.py --keyword "32gb" --min-price 40000 --max-price 400000 --location budapest --max-pages 5 --details 40 --timeout 180 --output results/hardverapro-budapest.json
 python -X utf8 -u scripts/hardverapro_pc_gyujto.py --keyword "32gb" --min-price 40000 --max-price 400000 --location pest --max-pages 5 --details 40 --timeout 180 --output results/hardverapro-pest.json
 python -X utf8 -u scripts/furbify_pc_gyujto.py --min-price 40000 --max-price 400000 --details 40 --timeout 180 --output results/furbify-pc.json
-python -X utf8 -u scripts/komphone_pc_gyujto.py --min-price 40000 --max-price 400000 --details 40 --timeout 180 --output results/komphone-pc.json
+python -X utf8 -u scripts/komphone_pc_gyujto.py --min-price 40000 --max-price 400000 --details 80 --related-hops 2 --timeout 240 --output results/komphone-pc.json
 ```
 
 A külön keresések egymással párhuzamosan futtathatók. A Facebook első nyilvános találati adagot gyűjt; a 60 másodperc felső célkorlát, nem teljes kínálat vagy garantált találatszám. A leírásokat a `description.text` vagy `description_evidence` mezőből olvasd. Az üres leírás nem sikeres adatkinyerés akkor sem, ha a státusz olvasottnak jelöli. Az ár `price.amount`, nem az átváltott `amount_with_offset_in_currency`.
