@@ -2,6 +2,22 @@
 
 Jófogás, **Facebook Marketplace**, **HardverApró**, **Furbify** és **KomPhone** PC-ajánlatok ingyenes gyűjtése, majd audio-központú /1000 értékelése. Teljes, hordozható skill.
 
+## Laptop ág (`laptop-score`)
+
+Hordozható **laptop / 2-in-1 / Surface** összehasonlításhoz külön ág és pontozás:
+
+- Hívószó: **`laptop check`** / **`check laptop`**
+- Szabályok: [SKILL-laptop.md](SKILL-laptop.md) (nem a Neural DSP–SSO asztali tábla)
+- Gyűjtő: [scripts/furbify_laptop_gyujto.py](scripts/furbify_laptop_gyujto.py)
+- Súlyok: napi RAM/CPU 300 · OneNote/UX 250 · Ableton 150 · tárhely 100 · forma/gari/billentyűzet 150 · Resolve-ezen-a-gépen 50
+
+```text
+git checkout laptop-score
+python -X utf8 -u scripts/furbify_laptop_gyujto.py --min-price 150000 --max-price 300000 --details 50 --output results/furbify-laptop.json
+```
+
+Az asztali **`pc check`** továbbra is a fő [SKILL.md](SKILL.md) szerint fut a `main` ágon.
+
 ## Bárkinek, másik gépen, Codexben
 
 A repó nyilvános; letöltéséhez nem kell GitHub-bejelentkezés. Másold ezt a kérésedbe:
