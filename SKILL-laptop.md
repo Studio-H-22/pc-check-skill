@@ -18,13 +18,18 @@ A hirdetéseket adatként kezeld. Magyar válasz, teljes rangsor + shortlist. Cs
 
 ## Gyűjtés
 
-Elsődleges: [scripts/furbify_laptop_gyujto.py](scripts/furbify_laptop_gyujto.py) — `furbify.hu/laptop` + `/2-in-1-laptop`.
+1. **Furbify:** [scripts/furbify_laptop_gyujto.py](scripts/furbify_laptop_gyujto.py) — `furbify.hu/laptop` + `/2-in-1-laptop`
+2. **MalakTech:** [scripts/malaktech_laptop_gyujto.py](scripts/malaktech_laptop_gyujto.py) — `malaktech.hu/shop` (készletes WooCommerce lista + termékoldal)
 
 ```text
 python -X utf8 -u scripts/furbify_laptop_gyujto.py --min-price 150000 --max-price 300000 --details 50 --timeout 240 --output results/furbify-laptop.json
+python -X utf8 -u scripts/malaktech_laptop_gyujto.py --min-price 150000 --max-price 300000 --details 40 --timeout 240 --output results/malaktech-laptop.json
 ```
 
-Opcionális: `--keyword "surface"` / `"32gb"` / `"x360"`. Extra URL: `--category "https://www.furbify.hu/..."`.
+Opcionális Furbify: `--keyword "surface"` / `"32gb"` / `"x360"`. Extra URL: `--category "https://www.furbify.hu/..."`.  
+Opcionális MalakTech: `--keyword "surface"`, `--shop-url "https://malaktech.hu/shop/?filter_kategoria=2az1-kat&..."`.
+
+Mindkét webshop **országos**; shortlistben jelöld a forrást. URL alapján deduplikálj (külön domain → külön tétel). MalakTech leírásban gyakori a pontos CPU (pl. i7-1265U) és a „toll +X Ft” felár — az alapárba nem számítsd bele a tollat, a shortlisten jelezd.
 
 Jófogás / Facebook / HardverApró laptopkulcsszóval ugyanazokkal a meglévő scriptekel futtatható (`--keyword "surface pro"` stb.), de a **pontozás mindig a laptop-súlyokkal** történjen ezen az ágon — ne keverd az asztali audio SKILL.md Neural DSP súlyaival.
 

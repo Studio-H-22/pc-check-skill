@@ -8,12 +8,13 @@ Hordozható **laptop / 2-in-1 / Surface** összehasonlításhoz külön ág és 
 
 - Hívószó: **`laptop check`** / **`check laptop`**
 - Szabályok: [SKILL-laptop.md](SKILL-laptop.md) (nem a Neural DSP–SSO asztali tábla)
-- Gyűjtő: [scripts/furbify_laptop_gyujto.py](scripts/furbify_laptop_gyujto.py)
+- Gyűjtők: [scripts/furbify_laptop_gyujto.py](scripts/furbify_laptop_gyujto.py), [scripts/malaktech_laptop_gyujto.py](scripts/malaktech_laptop_gyujto.py) ([malaktech.hu](https://malaktech.hu/))
 - Súlyok: napi RAM/CPU 300 · OneNote/UX 250 · Ableton 150 · tárhely 100 · forma/gari/billentyűzet 150 · Resolve-ezen-a-gépen 50
 
 ```text
 git checkout laptop-score
 python -X utf8 -u scripts/furbify_laptop_gyujto.py --min-price 150000 --max-price 300000 --details 50 --output results/furbify-laptop.json
+python -X utf8 -u scripts/malaktech_laptop_gyujto.py --min-price 150000 --max-price 300000 --details 40 --output results/malaktech-laptop.json
 ```
 
 Az asztali **`pc check`** továbbra is a fő [SKILL.md](SKILL.md) szerint fut a `main` ágon.

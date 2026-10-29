@@ -12,3 +12,10 @@ Lásd [SKILL-laptop.md](../SKILL-laptop.md). Röviden: RAM és tanulási UX elő
 
 - Lista: `https://www.furbify.hu/laptop`, `https://www.furbify.hu/2-in-1-laptop`
 - Termék: `https://www.furbify.hu/laptop-...-{id}`
+
+## MalakTech laptop URL
+
+- Shop: `https://malaktech.hu/shop/?mt_filter=1&keszlet=1&erkezo=1`
+- Termék: `https://malaktech.hu/product/.../`
+- Gyűjtő: `scripts/malaktech_laptop_gyujto.py`
+- Spec: WooCommerce attribútumtábla + `#tab-description` (gyakran pontos CPU / RAM / SSD / tollfelár)
