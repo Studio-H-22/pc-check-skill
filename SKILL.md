@@ -89,6 +89,20 @@ Számold meg az összes rekordot és az egyedi hirdetéseket. Azonos URL/azonos�
 - Alapkeret **300 000 Ft**. Legfeljebb **350 000 Ft**, kizárólag indokolt, kiemelkedő értéknél. A kötelező bővítések költségét is vedd figyelembe. Nem minden 300–350 ezres gép elfogadható.
 - A hiányos gépet külön jelöld bővítendőként vagy tisztázandóként; ne állítsd róla, hogy kész állapotban megfelel. Ismeretlen bővítési költséget ne találj ki; kérj végleges konfigurációs árat vagy adj meg egyértelműen becsült, forrásolt költségsávot.
 
+### Alapkonfig vs. feláras opció (kötelező)
+
+A megfelelés és a shortlist **a hirdetett alapáron járó konfigurációról** szól. HardverApró/Jófogás kereskedői szövegeknél ez gyakori csapda:
+
+| Szöveg a hirdetésben | Értelmezés |
+|---|---|
+| `16-32GB`, `16/32GB`, `16–32 Gb RAM` | **16 GB** az alap; a 32 GB felár vagy opció |
+| `32GB-ra bővítés +45 ezer` / `1TB-ra bővítés +20Eft` | Az alap **nem** tartalmazza a nagyobb kapacitást |
+| `512GB/1TB`, `512Gb vagy 1TB` | Ambiguus → a **kisebb, egyértelműen benne foglalt** érték (512 GB); 1 TB tisztázandó/felár |
+| `Opciók: 32GB RAM +40e Ft` mellett `RAM: 16GB` | **16 GB** |
+| Címben `32GB`, leírásban `RAM: 16GB` | A **leírás részlete** dönt; cím önmagában nem írja felül |
+
+Ne add „megfelel” státuszt, ha a 32 GB vagy az 1 TB csak felárral igaz. A felárakat a keretbe számold; ha a kötelező bővítések után az ár >350 ezer Ft, a gép ne legyen kereten belüli shortlist-győztes.
+
 ## Prioritás és /1000 pontozás
 
 Felhasználási prioritás: **Neural DSP > Serum > Spitfire SSO > Ableton > DaVinci > ár/érték**. Gaming-FPS, RGB, i7/Ryzen 9 felirat és önmagában a magszám ne határozza meg a sorrendet.
@@ -133,7 +147,11 @@ Az új szabály alapján például 500 GB SSD + 2 TB HDD és 2×500 GB SSD tárh
 
 ### HardverApró: JSON + szöveges másolat
 
-A [scripts/hardverapro_pc_gyujto.py](scripts/hardverapro_pc_gyujto.py) kimenete JSON (`schema_version: 1`), a hirdetések a `records` tömbben. Mezők: `title`, `url`, `price_huf`, `price_text`, `city`, `description_text`, `detail_status`. A leírást a `description_text` (`.uad-content`) adja; üres leírásnál a címadatot „csak címadat” jelöléssel őrizd. `--location budapest` → megye-ID 0, `pest` → 13, `magyarorszag` → nincs megyeszűrő. A `.txt` oldalkimenet a Jófogás-szövegformához hasonló. Indexre esett (szűretlen kategórialista) futást ne értékeld szűrt HardverApró-találatként.
+A [scripts/hardverapro_pc_gyujto.py](scripts/hardverapro_pc_gyujto.py) kimenete JSON (`schema_version: 1`), a hirdetések a `records` tömbben. Mezők: `title`, `url`, `price_huf`, `price_text`, `city`, `description_text`, `detail_status`. A leírást a `description_text` (`.uad-content`) adja; üres leírásnál a címadatot „csak címadat” jelöléssel őrizd. `--location budapest` → megye-ID 0, `pest` → 13, `magyarorszag` → nincs megyeszűrő. A `.txt` oldalkimenet a Jófogás-szövegformához hasonló.
+
+- Csak akkor fogadd el a futást szűrt HardverApró-találatnak, ha a `search_url` / böngésző URL `keres.php`-t tartalmaz, és van „N találat” jellegű számláló. Az `index.html` kategórialista **nem** szűrt eredmény.
+- A `city` gyakran több település (`Budapest, Debrecen, Szeged`): ez átvételi/postaopció, nem automatikus Budapest-lakcim. Shortlistnél jelezd; ne zárd ki pusztán a többi város említése miatt, ha a keresés budapesti/pesti megyeszűrővel ment.
+- Sok találat kereskedői „GAMER MAX / 16-32GB / feláras bővítés” sablon: mindig az [Alapkonfig vs. feláras opció](#alapkonfig-vs-feláras-opció-kötelező) szabályt alkalmazd a leírásra, ne a cím marketingjére.
 
 ### Facebook: a nyers adat a mérvadó
 
@@ -156,7 +174,7 @@ A helyi Facebook-gyűjtő kimenete egy objektum, a hirdetések a `records` tömb
 
 ### Vásárlási megfelelés számolással
 
-A három minimum külön feltétel: RAM legalább 32GB; legalább egy SSD 500/512GB vagy nagyobb; összes belső SSD+HDD legalább 1000GB. Ezek nem helyettesítik egymást. A hirdetett névleges kapacitást használd, ne a TiB-ben kijelzett formázott értéket.
+A három minimum külön feltétel: RAM legalább 32GB; legalább egy SSD 500/512GB vagy nagyobb; összes belső SSD+HDD legalább 1000GB. Ezek nem helyettesítik egymást. A hirdetett **alapárba foglalt** névleges kapacitást használd, ne a TiB-ben kijelzett formázott értéket, és ne a feláras opciókat.
 
 | Hirdetett tárhely | SSD-minimum | 1TB összminimum | Státusz |
 |---|---|---|---|
@@ -165,6 +183,10 @@ A három minimum külön feltétel: RAM legalább 32GB; legalább egy SSD 500/51
 | 512GB SSD | igen | nem | bővítendő |
 | 480GB SSD+3TB HDD | **nem** | igen | SSD bővítendő |
 | 2×500GB SSD vagy 1TB SSD | igen | igen | tárhely megfelel |
+| 16–32GB RAM sáv + 512GB SSD (1TB felár) | RAM: **nem** (16GB) | nem | bővítendő |
+| 32GB + 500GB NVMe + 3TB HDD | igen | igen | tárhely megfelel |
+
+Véglegesítés előtt **legalább a shortlist és a „megfelel” jelöltek** leírását olvasd vissza: ha a cím 32GB-ot mond, de a törzs 16GB-ot vagy „bővítés +X Ft”-ot, javítsd a státuszt. A mai HardverApró-kereskedői listákon ez gyakori.
 
 Az összes követelményt teljesítő, ismert árú Budapest/Pest gép „megfelel a leírás szerint”, a szokásos vásárlás előtti ellenőrzésekkel. A kötelező bővítéses gép a bevezetőben, táblázatban és shortlistben is **bővítendő** marad. A jobb ár nem törli a hiányt. 350 ezer Ft-os gép is keretkockázatos, ha még kötelező bővítés kell. Ismeretlen végleges árnál ezt jelöld, ne találj ki költséget. A 64GB kívánatos fejlesztés, nem alapminimum: költsége csak akkor kötelező, ha a felhasználó kéri.
 

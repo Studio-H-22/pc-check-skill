@@ -113,14 +113,26 @@ def build_search_url(keyword: str, min_price: int, max_price: int, location: str
     county = COUNTY_IDS.get(location)
     if county is not None:
         params["stcid"] = county[0]
-        # stcid_text nélkül a Budapest (0) GET gyakran indexre esik; űrlapnál kell.
+    else:
+        # Üres stcid tartja a keresőt keres.php-n; stcid nélküli GET gyakran indexre esik.
+        params["stcid"] = ""
     if offset:
         params["offset"] = offset
     return f"{BASE_ORIGIN}{SEARCH_PATH}?{urlencode(params)}"
 
 
+def _on_search_results(page) -> bool:
+    if "keres.php" not in page.url:
+        return False
+    try:
+        html = page.content()
+    except Exception:  # noqa: BLE001
+        return False
+    return bool(re.search(r"\d[\d\s]*\s+találat", html, re.I))
+
+
 def submit_search(page, keyword: str, min_price: int, max_price: int, location: str) -> None:
-    """Űrlapos keresés + navigációvárás. A Budapest stcid=0 puszta GET-je gyakran indexre esik."""
+    """Cookie után GET, ha kell űrlap. Index.html nem elfogadható szűrt találat."""
     land = f"{BASE_ORIGIN}{CATEGORY_PATH}/index.html"
     safe_goto(page, land)
     accept_cookie_banner(page)
@@ -129,6 +141,18 @@ def submit_search(page, keyword: str, min_price: int, max_price: int, location: 
     stcid = "" if county is None else str(county[0])
     stcid_text = "" if county is None else county[1]
 
+    # 1) Közvetlen GET (Pest/országos és sokszor Budapest is stabil süti után)
+    direct = build_search_url(keyword, min_price, max_price, location)
+    print(f"   [INFO] Kereső GET: {direct}")
+    safe_goto(page, direct)
+    accept_cookie_banner(page)
+    if _on_search_results(page):
+        return
+
+    # 2) Űrlap + navigációvárás (Budapest stcid=0 GET néha indexre esik)
+    print("   [INFO] GET nem adott keresőtalálatot; űrlapos próbálkozás.")
+    safe_goto(page, land)
+    accept_cookie_banner(page)
     try:
         with page.expect_navigation(timeout=45000, wait_until="domcontentloaded"):
             page.evaluate(
@@ -166,12 +190,8 @@ def submit_search(page, keyword: str, min_price: int, max_price: int, location: 
         print(f"   [WARN] Űrlap-navigáció: {exc}")
 
     page.wait_for_timeout(1500)
-    if "keres.php" not in page.url:
-        # Tartalék: Pest/országos GET általában stabil; Budapestnál az űrlap a fő út.
-        fallback = build_search_url(keyword, min_price, max_price, location)
-        print(f"   [INFO] Tartalék GET: {fallback}")
-        safe_goto(page, fallback)
-        accept_cookie_banner(page)
+    if not _on_search_results(page):
+        print(f"   [ERROR] Nincs érvényes keresőoldal ({page.url}).")
 
 
 def parse_result_count(soup: BeautifulSoup) -> int | None:
